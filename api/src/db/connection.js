@@ -7,7 +7,7 @@ import * as schema from './schema.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbPath = resolve(__dirname, '../../legalspot.db');
+const dbPath = process.env.DATABASE_PATH || resolve(__dirname, '../../legalspot.db');
 const sqlite = new Database(dbPath);
 
 sqlite.pragma('journal_mode = WAL');
