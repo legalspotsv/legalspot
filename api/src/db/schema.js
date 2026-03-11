@@ -1,18 +1,18 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, integer, real } from 'drizzle-orm/pg-core';
 
-export const users = sqliteTable('users', {
+export const users = pgTable('users', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   password_hash: text('password_hash').notNull(),
-  role: text('role').notNull().default('lawyer'), // admin | lawyer | client
+  role: text('role').notNull().default('lawyer'),
   client_id: text('client_id').references(() => clients.id),
   is_active: integer('is_active').notNull().default(1),
   created_at: text('created_at').notNull(),
   updated_at: text('updated_at').notNull(),
 });
 
-export const clients = sqliteTable('clients', {
+export const clients = pgTable('clients', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   group_name: text('group_name'),
@@ -26,7 +26,7 @@ export const clients = sqliteTable('clients', {
   updated_at: text('updated_at').notNull(),
 });
 
-export const tasks = sqliteTable('tasks', {
+export const tasks = pgTable('tasks', {
   id: text('id').primaryKey(),
   date: text('date').notNull(),
   lawyer_id: text('lawyer_id').notNull().references(() => users.id),
@@ -41,7 +41,7 @@ export const tasks = sqliteTable('tasks', {
   updated_at: text('updated_at').notNull(),
 });
 
-export const billingRecords = sqliteTable('billing_records', {
+export const billingRecords = pgTable('billing_records', {
   id: text('id').primaryKey(),
   client_id: text('client_id').notNull().references(() => clients.id),
   period: text('period').notNull(),
@@ -59,7 +59,7 @@ export const billingRecords = sqliteTable('billing_records', {
   created_at: text('created_at').notNull(),
 });
 
-export const taskTypes = sqliteTable('task_types', {
+export const taskTypes = pgTable('task_types', {
   id: text('id').primaryKey(),
   name: text('name').notNull().unique(),
   is_active: integer('is_active').notNull().default(1),
