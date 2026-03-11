@@ -1,17 +1,7 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const dbPath = process.env.DATABASE_PATH || resolve(__dirname, '../../legalspot.db');
-const sqlite = new Database(dbPath);
-
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
-
-export const db = drizzle(sqlite, { schema });
-export { sqlite };
+const sql = postgres(process.env.DATABASE_URL);
+export const db = drizzle(sql, { schema });
+export { sql };
