@@ -1,21 +1,9 @@
-import { sqlite } from './connection.js';
+import postgres from 'postgres';
+
+const sql = postgres(process.env.DATABASE_URL);
 
 const statements = [
-  // Users
-  `CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'lawyer',
-    client_id TEXT REFERENCES clients(id),
-    is_active INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  )`,
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
-
-  // Clients
+  // Clients (before users due to FK reference)
   `CREATE TABLE IF NOT EXISTS clients (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -29,6 +17,20 @@ const statements = [
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   )`,
+
+  // Users
+  `CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'lawyer',
+    client_id TEXT REFERENCES clients(id),
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
 
   // Tasks
   `CREATE TABLE IF NOT EXISTS tasks (
@@ -72,15 +74,17 @@ const statements = [
   // Task types
   `CREATE TABLE IF NOT EXISTS task_types (
     id TEXT PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     is_active INTEGER NOT NULL DEFAULT 1,
-    sort_order INTEGER NOT NULL DEFAULT 0
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT task_types_name_unique UNIQUE (name)
   )`,
 ];
 
 console.log('Ejecutando migraciones...');
-for (const sql of statements) {
-  sqlite.exec(sql);
+for (const statement of statements) {
+  await sql.unsafe(statement);
 }
 console.log('Migraciones completadas.');
+await sql.end();
 process.exit(0);
