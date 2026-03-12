@@ -51,8 +51,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-app.listen(PORT, () => {
-  console.log(`LegalSpot API corriendo en puerto ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`LegalSpot API corriendo en puerto ${PORT}`);
+  });
+}
 
 export default app;
