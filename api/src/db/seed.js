@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
-import { sqlite } from './connection.js';
+import postgres from 'postgres';
 
+const sql = postgres(process.env.DATABASE_URL);
 const now = new Date().toISOString();
 const SALT_ROUNDS = 10;
 
@@ -16,11 +17,8 @@ async function seed() {
     'Denuncia', 'VoBo', 'Certificación Notarial', 'Orden de Descuento', 'VISADO',
   ];
 
-  const insertTaskType = sqlite.prepare(
-    'INSERT OR IGNORE INTO task_types (id, name, is_active, sort_order) VALUES (?, ?, 1, ?)'
-  );
   for (let i = 0; i < taskTypeNames.length; i++) {
-    insertTaskType.run(uuid(), taskTypeNames[i], i);
+    await sql`INSERT INTO task_types (id, name, is_active, sort_order) VALUES (${uuid()}, ${taskTypeNames[i]}, 1, ${i}) ON CONFLICT (name) DO NOTHING`;
   }
   console.log(`  ${taskTypeNames.length} tipos de tarea creados`);
 
@@ -33,16 +31,13 @@ async function seed() {
     { name: 'Herbert Corona', has_fixed_fee: 0, monthly_fee: 0, hourly_rate: 100, carry_forward_balance: 0, notes: 'Poder General Administrativo en trámite' },
   ];
 
-  const insertClient = sqlite.prepare(
-    `INSERT OR IGNORE INTO clients (id, name, group_name, has_fixed_fee, monthly_fee, hourly_rate, carry_forward_balance, notes, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
-  );
-
   const clientIds = {};
   for (const c of clientsData) {
     const id = uuid();
     clientIds[c.name] = id;
-    insertClient.run(id, c.name, c.name, c.has_fixed_fee, c.monthly_fee, c.hourly_rate, c.carry_forward_balance, c.notes, now, now);
+    await sql`INSERT INTO clients (id, name, group_name, has_fixed_fee, monthly_fee, hourly_rate, carry_forward_balance, notes, is_active, created_at, updated_at)
+      VALUES (${id}, ${c.name}, ${c.name}, ${c.has_fixed_fee}, ${c.monthly_fee}, ${c.hourly_rate}, ${c.carry_forward_balance}, ${c.notes}, 1, ${now}, ${now})
+      ON CONFLICT (id) DO NOTHING`;
   }
   console.log(`  ${clientsData.length} clientes creados`);
 
@@ -51,31 +46,31 @@ async function seed() {
   const lawyerHash = await bcrypt.hash('abogado2024', SALT_ROUNDS);
   const clientHash = await bcrypt.hash('cliente2024', SALT_ROUNDS);
 
-  const insertUser = sqlite.prepare(
-    `INSERT OR IGNORE INTO users (id, name, email, password_hash, role, client_id, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`
-  );
+  const users = [
+    { name: 'Javier', email: 'javier@legalspot.sv', hash: adminHash, role: 'admin', client_id: null },
+    { name: 'Candy', email: 'candy@legalspot.sv', hash: adminHash, role: 'admin', client_id: null },
+    { name: 'Admin', email: 'admin@legalspot.sv', hash: adminHash, role: 'admin', client_id: null },
+    { name: 'Alan', email: 'alan@legalspot.sv', hash: lawyerHash, role: 'lawyer', client_id: null },
+    { name: 'Nahum', email: 'nahum@legalspot.sv', hash: lawyerHash, role: 'lawyer', client_id: null },
+    { name: 'Michelle', email: 'michelle@legalspot.sv', hash: lawyerHash, role: 'lawyer', client_id: null },
+    { name: 'Grupo BALU (Portal)', email: 'balu@cliente.com', hash: clientHash, role: 'client', client_id: clientIds['Grupo BALU'] },
+    { name: 'Horizon Global (Portal)', email: 'horizon@cliente.com', hash: clientHash, role: 'client', client_id: clientIds['Horizon Global'] },
+  ];
 
-  // Admins
-  insertUser.run(uuid(), 'Javier', 'javier@legalspot.sv', adminHash, 'admin', null, now, now);
-  insertUser.run(uuid(), 'Candy', 'candy@legalspot.sv', adminHash, 'admin', null, now, now);
-  insertUser.run(uuid(), 'Admin', 'admin@legalspot.sv', adminHash, 'admin', null, now, now);
-
-  // Lawyers
-  insertUser.run(uuid(), 'Alan', 'alan@legalspot.sv', lawyerHash, 'lawyer', null, now, now);
-  insertUser.run(uuid(), 'Nahum', 'nahum@legalspot.sv', lawyerHash, 'lawyer', null, now, now);
-  insertUser.run(uuid(), 'Michelle', 'michelle@legalspot.sv', lawyerHash, 'lawyer', null, now, now);
-
-  // Client portal users
-  insertUser.run(uuid(), 'Grupo BALU (Portal)', 'balu@cliente.com', clientHash, 'client', clientIds['Grupo BALU'], now, now);
-  insertUser.run(uuid(), 'Horizon Global (Portal)', 'horizon@cliente.com', clientHash, 'client', clientIds['Horizon Global'], now, now);
+  for (const u of users) {
+    await sql`INSERT INTO users (id, name, email, password_hash, role, client_id, is_active, created_at, updated_at)
+      VALUES (${uuid()}, ${u.name}, ${u.email}, ${u.hash}, ${u.role}, ${u.client_id}, 1, ${now}, ${now})
+      ON CONFLICT DO NOTHING`;
+  }
 
   console.log('  Usuarios creados (3 admin, 3 abogados, 2 clientes)');
   console.log('Seed completado.');
+  await sql.end();
   process.exit(0);
 }
 
-seed().catch(err => {
+seed().catch(async (err) => {
   console.error('Error en seed:', err);
+  await sql.end();
   process.exit(1);
 });
