@@ -1,21 +1,20 @@
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
-import { sqlite } from '../db/connection.js';
+import { sql } from '../db/connection.js';
 import { requireRole } from '../middleware/auth.js';
 import { calculateClientPeriod } from '../services/calculations.js';
 
 const router = Router();
 
-// GET /api/billing/:clientId — historial de billing de un cliente
+// GET /api/billing/:clientId â historial de billing de un cliente
 router.get('/:clientId', requireRole('admin'), async (req, res) => {
   try {
-    const records = sqlite.prepare(
-      'SELECT * FROM billing_records WHERE client_id = ? ORDER BY period DESC'
-    ).all(req.params.clientId);
+    const records = await sql`
+      SELECT * FROM billing_records WHERE client_id = ${req.params.clientId} ORDER BY period DESC
+    `;
 
-    // Agregar resumen del periodo actual
     const currentPeriod = new Date().toISOString().substring(0, 7);
-    const currentSummary = calculateClientPeriod(req.params.clientId, currentPeriod);
+    const currentSummary = await calculateClientPeriod(req.params.clientId, currentPeriod);
 
     res.json({ billing_records: records, current_period: currentSummary });
   } catch (err) {
@@ -30,13 +29,12 @@ router.post('/:clientId/close-period', requireRole('admin'), async (req, res) =>
     const { period } = req.body;
     if (!period) return res.status(400).json({ error: 'Periodo requerido (YYYY-MM)' });
 
-    const summary = calculateClientPeriod(req.params.clientId, period);
+    const summary = await calculateClientPeriod(req.params.clientId, period);
     if (!summary) return res.status(404).json({ error: 'Cliente no encontrado' });
 
-    // Generar billing record
-    const existing = sqlite.prepare(
-      'SELECT * FROM billing_records WHERE client_id = ? AND period = ?'
-    ).get(req.params.clientId, period);
+    const [existing] = await sql`
+      SELECT * FROM billing_records WHERE client_id = ${req.params.clientId} AND period = ${period}
+    `;
 
     const fixed_fee = summary.has_fixed_fee ? summary.monthly_fee : 0;
     const excess_amount = summary.excedente || 0;
@@ -44,34 +42,37 @@ router.post('/:clientId/close-period', requireRole('admin'), async (req, res) =>
       ? Math.round((fixed_fee + excess_amount) * 100) / 100
       : summary.consumo_usd;
 
-    const prevBilling = sqlite.prepare(`
+    const [prevBilling] = await sql`
       SELECT accumulated_total FROM billing_records
-      WHERE client_id = ? AND period < ? ORDER BY period DESC LIMIT 1
-    `).get(req.params.clientId, period);
+      WHERE client_id = ${req.params.clientId} AND period < ${period} ORDER BY period DESC LIMIT 1
+    `;
 
     const prevAccumulated = prevBilling?.accumulated_total || 0;
     const now = new Date().toISOString();
 
     if (existing) {
       const accumulated_total = Math.round((prevAccumulated + total_invoiced - existing.amount_paid) * 100) / 100;
-      sqlite.prepare(`
-        UPDATE billing_records SET fixed_fee = ?, total_consumed = ?, excess_amount = ?,
-        total_invoiced = ?, accumulated_total = ? WHERE id = ?
-      `).run(fixed_fee, summary.consumo_usd, excess_amount, total_invoiced, accumulated_total, existing.id);
+      await sql`
+        UPDATE billing_records SET fixed_fee = ${fixed_fee}, total_consumed = ${summary.consumo_usd},
+        excess_amount = ${excess_amount}, total_invoiced = ${total_invoiced},
+        accumulated_total = ${accumulated_total} WHERE id = ${existing.id}
+      `;
     } else {
       const id = uuid();
       const accumulated_total = Math.round((prevAccumulated + total_invoiced) * 100) / 100;
-      sqlite.prepare(`
+      await sql`
         INSERT INTO billing_records (id, client_id, period, fixed_fee, total_consumed, excess_amount,
         total_invoiced, amount_paid, payment_status, accumulated_total, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?, ?)
-      `).run(id, req.params.clientId, period, fixed_fee, summary.consumo_usd, excess_amount, total_invoiced, accumulated_total, now);
+        VALUES (${id}, ${req.params.clientId}, ${period}, ${fixed_fee}, ${summary.consumo_usd},
+        ${excess_amount}, ${total_invoiced}, 0, 'pending', ${accumulated_total}, ${now})
+      `;
     }
 
-    // Actualizar carry_forward_balance
     if (summary.has_fixed_fee && summary.saldo_a_favor > 0) {
-      sqlite.prepare('UPDATE clients SET carry_forward_balance = carry_forward_balance + ?, updated_at = ? WHERE id = ?')
-        .run(summary.saldo_a_favor, now, req.params.clientId);
+      await sql`
+        UPDATE clients SET carry_forward_balance = carry_forward_balance + ${summary.saldo_a_favor},
+        updated_at = ${now} WHERE id = ${req.params.clientId}
+      `;
     }
 
     res.json({ ok: true, summary });
@@ -86,32 +87,32 @@ router.post('/:clientId/payment', requireRole('admin'), async (req, res) => {
   try {
     const { period, amount_paid, payment_date, invoice_reference, invoice_link, notes } = req.body;
     if (!period) return res.status(400).json({ error: 'Periodo requerido' });
-    if (!amount_paid || amount_paid <= 0) return res.status(400).json({ error: 'Monto de pago inválido' });
+    if (!amount_paid || amount_paid <= 0) return res.status(400).json({ error: 'Monto de pago invÃ¡lido' });
 
-    const existing = sqlite.prepare(
-      'SELECT * FROM billing_records WHERE client_id = ? AND period = ?'
-    ).get(req.params.clientId, period);
+    const [existing] = await sql`
+      SELECT * FROM billing_records WHERE client_id = ${req.params.clientId} AND period = ${period}
+    `;
 
     if (!existing) {
-      return res.status(404).json({ error: 'No existe registro de facturación para este periodo. Cierre el periodo primero.' });
+      return res.status(404).json({ error: 'No existe registro de facturaciÃ³n para este periodo. Cierre el periodo primero.' });
     }
 
     const totalPaid = Math.round((existing.amount_paid + amount_paid) * 100) / 100;
     const status = totalPaid >= existing.total_invoiced ? 'paid' : 'pending';
+    const payDate = payment_date || new Date().toISOString().substring(0, 10);
 
-    sqlite.prepare(`
-      UPDATE billing_records SET amount_paid = ?, payment_date = ?, payment_status = ?,
-      invoice_reference = COALESCE(?, invoice_reference),
-      invoice_link = COALESCE(?, invoice_link),
-      notes = COALESCE(?, notes)
-      WHERE id = ?
-    `).run(totalPaid, payment_date || new Date().toISOString().substring(0, 10), status,
-           invoice_reference || null, invoice_link || null, notes || null, existing.id);
+    await sql`
+      UPDATE billing_records SET amount_paid = ${totalPaid}, payment_date = ${payDate}, payment_status = ${status},
+      invoice_reference = COALESCE(${invoice_reference || null}, invoice_reference),
+      invoice_link = COALESCE(${invoice_link || null}, invoice_link),
+      notes = COALESCE(${notes || null}, notes)
+      WHERE id = ${existing.id}
+    `;
 
-    // Recalcular accumulated_total
     const newAccumulated = Math.round((existing.accumulated_total - amount_paid) * 100) / 100;
-    sqlite.prepare('UPDATE billing_records SET accumulated_total = ? WHERE id = ?')
-      .run(Math.max(0, newAccumulated), existing.id);
+    await sql`
+      UPDATE billing_records SET accumulated_total = ${Math.max(0, newAccumulated)} WHERE id = ${existing.id}
+    `;
 
     res.json({ ok: true, payment_status: status, amount_paid: totalPaid });
   } catch (err) {
