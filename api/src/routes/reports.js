@@ -4,10 +4,10 @@ import { generateMonthlyReport, generateAccountStatement } from '../services/pdf
 
 const router = Router();
 
-// GET /api/reports/monthly/:clientId/:period — PDF informe mensual
-router.get('/monthly/:clientId/:period', requireRole('admin'), (req, res) => {
+// GET /api/reports/monthly/:clientId/:period â PDF informe mensual
+router.get('/monthly/:clientId/:period', requireRole('admin'), async (req, res) => {
   try {
-    const doc = generateMonthlyReport(req.params.clientId, req.params.period);
+    const doc = await generateMonthlyReport(req.params.clientId, req.params.period);
     if (!doc) return res.status(404).json({ error: 'Cliente no encontrado' });
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -20,10 +20,10 @@ router.get('/monthly/:clientId/:period', requireRole('admin'), (req, res) => {
   }
 });
 
-// GET /api/reports/statement/:clientId — PDF estado de cuenta
-router.get('/statement/:clientId', requireRole('admin'), (req, res) => {
+// GET /api/reports/statement/:clientId â PDF estado de cuenta
+router.get('/statement/:clientId', requireRole('admin'), async (req, res) => {
   try {
-    const doc = generateAccountStatement(req.params.clientId);
+    const doc = await generateAccountStatement(req.params.clientId);
     if (!doc) return res.status(404).json({ error: 'Cliente no encontrado' });
 
     res.setHeader('Content-Type', 'application/pdf');
