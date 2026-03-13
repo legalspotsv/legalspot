@@ -1,5 +1,5 @@
 import PdfPrinter from 'pdfmake';
-import { sqlite } from '../db/connection.js';
+import { sql } from '../db/connection.js';
 import { calculateClientPeriod } from './calculations.js';
 
 const fonts = {
@@ -43,16 +43,16 @@ function footer() {
 /**
  * Genera PDF de informe mensual de consumo.
  */
-export function generateMonthlyReport(clientId, period) {
-  const summary = calculateClientPeriod(clientId, period);
+export async function generateMonthlyReport(clientId, period) {
+  const summary = await calculateClientPeriod(clientId, period);
   if (!summary) return null;
 
-  const tasks = sqlite.prepare(`
+  const tasks = await sql`
     SELECT t.date, u.name as lawyer_name, t.task_type, t.description, t.time_tenths, t.amount
     FROM tasks t JOIN users u ON u.id = t.lawyer_id
-    WHERE t.client_id = ? AND t.month_period = ?
+    WHERE t.client_id = ${clientId} AND t.month_period = ${period}
     ORDER BY t.date ASC
-  `).all(clientId, period);
+  `;
 
   const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const [year, month] = period.split('-');
@@ -86,7 +86,7 @@ export function generateMonthlyReport(clientId, period) {
       t.task_type,
       { text: t.description, fontSize: 7 },
       { text: t.time_tenths.toString(), alignment: 'right' },
-      { text: `$${t.amount.toFixed(2)}`, alignment: 'right' },
+      { text: `$${Number(t.amount).toFixed(2)}`, alignment: 'right' },
     ]),
   ];
 
@@ -132,13 +132,13 @@ export function generateMonthlyReport(clientId, period) {
 /**
  * Genera PDF de estado de cuenta.
  */
-export function generateAccountStatement(clientId) {
-  const client = sqlite.prepare('SELECT * FROM clients WHERE id = ?').get(clientId);
+export async function generateAccountStatement(clientId) {
+  const [client] = await sql`SELECT * FROM clients WHERE id = ${clientId}`;
   if (!client) return null;
 
-  const records = sqlite.prepare(
-    'SELECT * FROM billing_records WHERE client_id = ? ORDER BY period ASC'
-  ).all(clientId);
+  const records = await sql`
+    SELECT * FROM billing_records WHERE client_id = ${clientId} ORDER BY period ASC
+  `;
 
   const tableBody = [
     [
@@ -152,13 +152,13 @@ export function generateAccountStatement(clientId) {
       { text: 'Ref.', bold: true, fillColor: COLORS.lightGray },
     ],
     ...records.map(r => {
-      const pendiente = Math.max(0, r.total_invoiced - r.amount_paid);
+      const pendiente = Math.max(0, Number(r.total_invoiced) - Number(r.amount_paid));
       return [
         r.period,
-        { text: `$${r.fixed_fee.toFixed(2)}`, alignment: 'right' },
-        { text: `$${r.excess_amount.toFixed(2)}`, alignment: 'right' },
-        { text: `$${r.total_invoiced.toFixed(2)}`, alignment: 'right', bold: true },
-        { text: `$${r.amount_paid.toFixed(2)}`, alignment: 'right' },
+        { text: `$${Number(r.fixed_fee).toFixed(2)}`, alignment: 'right' },
+        { text: `$${Number(r.excess_amount).toFixed(2)}`, alignment: 'right' },
+        { text: `$${Number(r.total_invoiced).toFixed(2)}`, alignment: 'right', bold: true },
+        { text: `$${Number(r.amount_paid).toFixed(2)}`, alignment: 'right' },
         { text: `$${pendiente.toFixed(2)}`, alignment: 'right', color: pendiente > 0 ? COLORS.red : '#059669' },
         { text: r.payment_status === 'paid' ? 'PAGADO' : 'PENDIENTE', alignment: 'center', color: r.payment_status === 'paid' ? '#059669' : COLORS.red, bold: true },
         { text: r.invoice_reference || '—', fontSize: 7 },
@@ -166,8 +166,8 @@ export function generateAccountStatement(clientId) {
     }),
   ];
 
-  const totalInvoiced = records.reduce((s, r) => s + r.total_invoiced, 0);
-  const totalPaid = records.reduce((s, r) => s + r.amount_paid, 0);
+  const totalInvoiced = records.reduce((s, r) => s + Number(r.total_invoiced), 0);
+  const totalPaid = records.reduce((s, r) => s + Number(r.amount_paid), 0);
   const totalPending = totalInvoiced - totalPaid;
 
   const docDefinition = {
