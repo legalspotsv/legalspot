@@ -11,6 +11,8 @@ import reportsRouter from './routes/reports.js';
 import portalRouter from './routes/portal.js';
 import usersRouter from './routes/users.js';
 import taskTypesRouter from './routes/task-types.js';
+import processesRouter from './routes/processes.js';
+import documentsRouter from './routes/documents.js';
 import { authenticate } from './middleware/auth.js';
 
 const app = express();
@@ -39,6 +41,8 @@ app.use('/api/reports', authenticate, reportsRouter);
 app.use('/api/portal', authenticate, portalRouter);
 app.use('/api/users', authenticate, usersRouter);
 app.use('/api/task-types', authenticate, taskTypesRouter);
+app.use('/api/processes', authenticate, processesRouter);
+app.use('/api/documents', authenticate, documentsRouter);
 
 // 404 handler
 app.use((req, res) => {

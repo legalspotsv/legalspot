@@ -31,7 +31,9 @@ export default function Login() {
       <div className="w-full max-w-[360px]">
         {/* Brand */}
         <div className="mb-8">
-          <div className="w-9 h-9 bg-[#0f0f0f] flex items-center justify-center text-white text-xs font-bold tracking-tight mb-4">LS</div>
+          <div className="w-9 h-9 bg-[#FF2800] flex items-center justify-center mb-4">
+            <span className="text-white font-bold leading-none" style={{ fontSize: '1.6rem' }}>L.</span>
+          </div>
           <h1 className="text-xl font-semibold text-[#0f0f0f] tracking-tight">LegalSpot</h1>
           <p className="text-sm text-[#6b6b6b] mt-1">Inicia sesión para continuar</p>
         </div>

@@ -5,6 +5,7 @@ import { Plus, Search } from 'lucide-react';
 
 export default function ClientList() {
   const [clients, setClients] = useState([]);
+  const [lawyers, setLawyers] = useState([]);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +16,18 @@ export default function ClientList() {
       .catch(console.error);
   };
 
+  useEffect(() => {
+    api.get('/users').then(res => {
+      setLawyers(res.data.users.filter(u => u.role === 'lawyer' && u.is_active));
+    }).catch(console.error);
+  }, []);
+
   useEffect(() => { load(); }, [search]);
+
+  const billingLabel = (c) => {
+    if (c.billing_type === 'process') return 'Proceso';
+    return c.has_fixed_fee ? 'Fee + Horas' : 'Por Hora';
+  };
 
   return (
     <div className="space-y-5">
@@ -45,9 +57,9 @@ export default function ClientList() {
           <thead>
             <tr className="border-b border-[#e5e5e5]">
               <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Cliente</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Modalidad</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Fee Mensual</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Tarifa/Hr</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Tipo</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Abogado</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Fee / Tarifa</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Estado</th>
             </tr>
           </thead>
@@ -59,11 +71,19 @@ export default function ClientList() {
                 onClick={() => navigate(`/admin/clients/${c.id}`)}
               >
                 <td className="px-4 py-3 font-medium text-[#0f0f0f]">{c.name}</td>
-                <td className="px-4 py-3 text-[#6b6b6b]">{c.has_fixed_fee ? 'Fee Fijo' : 'Por Hora'}</td>
-                <td className="px-4 py-3 text-right text-[#6b6b6b] tabular-nums">
-                  {c.has_fixed_fee ? `$${c.monthly_fee?.toFixed(2)}` : '—'}
+                <td className="px-4 py-3">
+                  <span className={`inline-block text-xs px-2 py-0.5 rounded font-medium ${
+                    c.billing_type === 'process'
+                      ? 'bg-[#f0f4ff] text-[#3730a3]'
+                      : 'bg-[#f5f5f5] text-[#6b6b6b]'
+                  }`}>
+                    {billingLabel(c)}
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-right text-[#6b6b6b] tabular-nums">${c.hourly_rate?.toFixed(2)}</td>
+                <td className="px-4 py-3 text-[#6b6b6b]">{c.assigned_lawyer_name || <span className="text-[#d4d4d4]">—</span>}</td>
+                <td className="px-4 py-3 text-right text-[#6b6b6b] tabular-nums">
+                  {c.billing_type === 'process' ? '—' : c.has_fixed_fee ? `$${c.monthly_fee?.toFixed(0)}/mes` : `$${c.hourly_rate?.toFixed(0)}/hr`}
+                </td>
                 <td className="px-4 py-3 text-center">
                   <span className={`inline-block text-xs px-2 py-0.5 rounded ${c.is_active ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#f5f5f5] text-[#a3a3a3]'}`}>
                     {c.is_active ? 'Activo' : 'Inactivo'}
@@ -81,20 +101,26 @@ export default function ClientList() {
       </div>
 
       {showForm && (
-        <ClientFormModal onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />
+        <ClientFormModal
+          lawyers={lawyers}
+          onClose={() => setShowForm(false)}
+          onSaved={() => { setShowForm(false); load(); }}
+        />
       )}
     </div>
   );
 }
 
-function ClientFormModal({ client, onClose, onSaved }) {
+function ClientFormModal({ client, lawyers, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: client?.name || '',
     group_name: client?.group_name || '',
+    billing_type: client?.billing_type || 'hourly',
     has_fixed_fee: client?.has_fixed_fee ?? true,
     monthly_fee: client?.monthly_fee || 0,
     hourly_rate: client?.hourly_rate || 175,
     carry_forward_balance: client?.carry_forward_balance || 0,
+    assigned_lawyer_id: client?.assigned_lawyer_id || '',
     notes: client?.notes || '',
   });
   const [error, setError] = useState('');
@@ -105,10 +131,11 @@ function ClientFormModal({ client, onClose, onSaved }) {
     setError('');
     setSaving(true);
     try {
+      const payload = { ...form, assigned_lawyer_id: form.assigned_lawyer_id || null };
       if (client) {
-        await api.put(`/clients/${client.id}`, form);
+        await api.put(`/clients/${client.id}`, payload);
       } else {
-        await api.post('/clients', form);
+        await api.post('/clients', payload);
       }
       onSaved();
     } catch (err) {
@@ -123,7 +150,7 @@ function ClientFormModal({ client, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded w-full max-w-lg p-6 space-y-4" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <h2 className="text-base font-semibold text-[#0f0f0f]">{client ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
 
         {error && (
@@ -137,55 +164,78 @@ function ClientFormModal({ client, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className={labelCls}>Nombre del grupo (opcional)</label>
-            <input type="text" value={form.group_name} onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))} className={inputCls} />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="fixed-fee"
-              checked={form.has_fixed_fee}
-              onChange={e => setForm(f => ({ ...f, has_fixed_fee: e.target.checked }))}
-              className="rounded"
-            />
-            <label htmlFor="fixed-fee" className="text-sm text-[#0f0f0f]">Tiene fee mensual fijo</label>
-          </div>
-
-          {form.has_fixed_fee && (
-            <div>
-              <label className={labelCls}>Fee Mensual (USD)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={form.monthly_fee}
-                onChange={e => setForm(f => ({ ...f, monthly_fee: parseFloat(e.target.value) || 0 }))}
-                className={inputCls}
-              />
+            <label className={labelCls}>Tipo de facturación</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'hourly', label: 'Por Horas / Fee' },
+                { value: 'process', label: 'Por Proceso' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, billing_type: opt.value }))}
+                  className={`py-2.5 rounded border text-sm font-medium transition-colors ${
+                    form.billing_type === opt.value
+                      ? 'bg-[#0f0f0f] text-white border-[#0f0f0f]'
+                      : 'bg-white text-[#6b6b6b] border-[#e5e5e5] hover:border-[#0f0f0f]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {form.billing_type === 'hourly' && (
+            <>
+              <div className="flex items-center gap-3 py-1">
+                <input
+                  type="checkbox"
+                  id="fixed-fee"
+                  checked={!!form.has_fixed_fee}
+                  onChange={e => setForm(f => ({ ...f, has_fixed_fee: e.target.checked }))}
+                  className="rounded"
+                />
+                <label htmlFor="fixed-fee" className="text-sm text-[#0f0f0f]">Tiene fee mensual fijo (retainer)</label>
+              </div>
+
+              {form.has_fixed_fee && (
+                <div>
+                  <label className={labelCls}>Fee Mensual (USD)</label>
+                  <input
+                    type="number" step="0.01" value={form.monthly_fee}
+                    onChange={e => setForm(f => ({ ...f, monthly_fee: parseFloat(e.target.value) || 0 }))}
+                    className={inputCls}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className={labelCls}>Tarifa por Hora (USD)</label>
+                <input
+                  type="number" step="0.01" value={form.hourly_rate}
+                  onChange={e => setForm(f => ({ ...f, hourly_rate: parseFloat(e.target.value) || 0 }))}
+                  className={inputCls} required
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Saldo a favor (USD)</label>
+                <input
+                  type="number" step="0.01" value={form.carry_forward_balance}
+                  onChange={e => setForm(f => ({ ...f, carry_forward_balance: parseFloat(e.target.value) || 0 }))}
+                  className={inputCls}
+                />
+              </div>
+            </>
           )}
 
           <div>
-            <label className={labelCls}>Tarifa por Hora (USD)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.hourly_rate}
-              onChange={e => setForm(f => ({ ...f, hourly_rate: parseFloat(e.target.value) || 0 }))}
-              className={inputCls}
-              required
-            />
-          </div>
-
-          <div>
-            <label className={labelCls}>Saldo a favor acumulado (USD)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.carry_forward_balance}
-              onChange={e => setForm(f => ({ ...f, carry_forward_balance: parseFloat(e.target.value) || 0 }))}
-              className={inputCls}
-            />
+            <label className={labelCls}>Abogado asignado</label>
+            <select value={form.assigned_lawyer_id} onChange={e => setForm(f => ({ ...f, assigned_lawyer_id: e.target.value }))} className={inputCls}>
+              <option value="">Sin asignar</option>
+              {lawyers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
           </div>
 
           <div>

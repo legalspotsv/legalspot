@@ -46,7 +46,9 @@ export default function Layout() {
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[220px] bg-white border-r border-[#e5e5e5] flex flex-col transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 h-14 border-b border-[#e5e5e5]">
-          <div className="w-7 h-7 bg-[#0f0f0f] flex items-center justify-center text-white text-xs font-bold tracking-tight">LS</div>
+          <div className="w-7 h-7 bg-[#FF2800] flex items-center justify-center">
+            <span className="text-white font-bold leading-none" style={{ fontSize: '1.1rem' }}>L.</span>
+          </div>
           <span className="font-semibold text-[#0f0f0f] tracking-tight">LegalSpot</span>
           <button className="lg:hidden ml-auto text-[#6b6b6b] hover:text-[#0f0f0f]" onClick={() => setSidebarOpen(false)}>
             <X size={18} />
@@ -100,7 +102,9 @@ export default function Layout() {
           <button onClick={() => setSidebarOpen(true)} className="text-[#6b6b6b] hover:text-[#0f0f0f]">
             <Menu size={20} />
           </button>
-          <div className="w-6 h-6 bg-[#0f0f0f] flex items-center justify-center text-white text-xs font-bold">LS</div>
+          <div className="w-6 h-6 bg-[#FF2800] flex items-center justify-center">
+            <span className="text-white font-bold leading-none" style={{ fontSize: '1rem' }}>L.</span>
+          </div>
           <span className="font-semibold text-[#0f0f0f] text-sm tracking-tight">LegalSpot</span>
         </header>
 
