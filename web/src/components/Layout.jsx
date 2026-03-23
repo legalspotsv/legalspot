@@ -36,28 +36,33 @@ export default function Layout() {
   const roleLabel = user?.role === 'admin' ? 'Administrador' : user?.role === 'lawyer' ? 'Abogado' : 'Cliente';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-white flex">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200">
-          <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-bold text-sm">L.</div>
-          <span className="font-bold text-gray-900">LegalSpot</span>
-          <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
-            <X size={20} />
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[220px] bg-white border-r border-[#e5e5e5] flex flex-col transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 h-14 border-b border-[#e5e5e5]">
+          <div className="w-7 h-7 bg-[#FF2800] flex items-center justify-center">
+            <span className="text-white font-bold leading-none" style={{ fontSize: '1.1rem' }}>L.</span>
+          </div>
+          <span className="font-semibold text-[#0f0f0f] tracking-tight">LegalSpot</span>
+          <button className="lg:hidden ml-auto text-[#6b6b6b] hover:text-[#0f0f0f]" onClick={() => setSidebarOpen(false)}>
+            <X size={18} />
           </button>
         </div>
 
-        <div className="px-6 py-3 border-b border-gray-100">
-          <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-          <p className="text-xs text-gray-500">{roleLabel}</p>
+        {/* User info */}
+        <div className="px-5 py-4 border-b border-[#e5e5e5]">
+          <p className="text-sm font-medium text-[#0f0f0f] truncate">{user?.name}</p>
+          <p className="text-xs text-[#a3a3a3] mt-0.5">{roleLabel}</p>
         </div>
 
-        <nav className="p-4 space-y-1">
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
           {nav.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
@@ -65,35 +70,45 @@ export default function Layout() {
               end={end}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-red-50 text-red-700' : 'text-gray-600 hover:bg-gray-100'
+                `flex items-center gap-2.5 px-3 py-2 text-sm transition-colors rounded ${
+                  isActive
+                    ? 'bg-[#f5f5f5] text-[#0f0f0f] font-medium'
+                    : 'text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#0f0f0f]'
                 }`
               }
             >
-              <Icon size={18} />
+              <Icon size={15} strokeWidth={1.75} />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 w-full">
-            <LogOut size={18} />
+        {/* Logout */}
+        <div className="px-3 py-3 border-t border-[#e5e5e5]">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 px-3 py-2 w-full text-sm text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#0f0f0f] transition-colors rounded"
+          >
+            <LogOut size={15} strokeWidth={1.75} />
             Cerrar Sesión
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-gray-200 px-4 py-3 lg:hidden flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(true)} className="p-1">
-            <Menu size={24} />
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+        {/* Mobile header */}
+        <header className="bg-white border-b border-[#e5e5e5] px-4 h-14 lg:hidden flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(true)} className="text-[#6b6b6b] hover:text-[#0f0f0f]">
+            <Menu size={20} />
           </button>
-          <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-white font-bold text-xs">L.</div>
-          <span className="font-bold text-gray-900 text-sm">LegalSpot</span>
+          <div className="w-6 h-6 bg-[#FF2800] flex items-center justify-center">
+            <span className="text-white font-bold leading-none" style={{ fontSize: '1rem' }}>L.</span>
+          </div>
+          <span className="font-semibold text-[#0f0f0f] text-sm tracking-tight">LegalSpot</span>
         </header>
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">
+
+        <main className="flex-1 p-6 lg:p-8 overflow-auto bg-[#fafafa]">
           <Outlet />
         </main>
       </div>
