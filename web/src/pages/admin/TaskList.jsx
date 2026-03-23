@@ -31,80 +31,127 @@ export default function TaskList() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Tareas</h1>
-        <button onClick={() => { setEditTask(null); setShowForm(true); }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          <Plus size={16} /> Nueva Tarea
+        <h1 className="text-xl font-semibold text-[#0f0f0f] tracking-tight">Tareas</h1>
+        <button
+          onClick={() => { setEditTask(null); setShowForm(true); }}
+          className="flex items-center gap-1.5 bg-[#0f0f0f] hover:bg-[#2a2a2a] text-white px-3 py-2 text-sm font-medium rounded transition-colors"
+        >
+          <Plus size={14} /> Nueva Tarea
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <input type="month" value={filters.period} onChange={e => setFilters(f => ({ ...f, period: e.target.value }))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-        <select value={filters.client_id} onChange={e => setFilters(f => ({ ...f, client_id: e.target.value }))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="month"
+          value={filters.period}
+          onChange={e => setFilters(f => ({ ...f, period: e.target.value }))}
+          className="px-3 py-2 border border-[#e5e5e5] bg-white text-sm rounded focus:outline-none focus:border-[#0f0f0f]"
+        />
+        <select
+          value={filters.client_id}
+          onChange={e => setFilters(f => ({ ...f, client_id: e.target.value }))}
+          className="px-3 py-2 border border-[#e5e5e5] bg-white text-sm rounded focus:outline-none focus:border-[#0f0f0f]"
+        >
           <option value="">Todos los clientes</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select value={filters.lawyer_id} onChange={e => setFilters(f => ({ ...f, lawyer_id: e.target.value }))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <select
+          value={filters.lawyer_id}
+          onChange={e => setFilters(f => ({ ...f, lawyer_id: e.target.value }))}
+          className="px-3 py-2 border border-[#e5e5e5] bg-white text-sm rounded focus:outline-none focus:border-[#0f0f0f]"
+        >
           <option value="">Todos los abogados</option>
           {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <div className="bg-white border border-[#e5e5e5] rounded overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Fecha</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Cliente</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Abogado</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Tipo</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Descripción</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-600">Horas</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-600">Monto</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-600">Acciones</th>
+          <thead>
+            <tr className="border-b border-[#e5e5e5]">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Fecha</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Cliente</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Abogado</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Tipo</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Descripción</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Horas</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider">Monto</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-[#a3a3a3] uppercase tracking-wider"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {tasks.map(t => (
-              <tr key={t.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-gray-900">{t.date}</td>
-                <td className="px-4 py-3 text-gray-700">{t.client_name}</td>
-                <td className="px-4 py-3 text-gray-700">{t.lawyer_name}</td>
-                <td className="px-4 py-3 text-gray-700">{t.task_type}</td>
-                <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{t.description}</td>
-                <td className="px-4 py-3 text-right text-gray-900">{t.time_tenths}</td>
-                <td className="px-4 py-3 text-right text-gray-900 font-medium">${t.amount?.toFixed(2)}</td>
-                <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
-                  <button onClick={() => { setEditTask(t); setShowForm(true); }} className="text-blue-500 hover:text-blue-700 p-1" title="Editar">
-                    <Pencil size={16} />
-                  </button>
-                  <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-700 p-1" title="Eliminar">
-                    <Trash2 size={16} />
-                  </button>
+              <tr key={t.id} className="border-b border-[#f0f0f0] hover:bg-[#fafafa]">
+                <td className="px-4 py-3 text-[#6b6b6b] tabular-nums">{t.date}</td>
+                <td className="px-4 py-3 text-[#0f0f0f]">{t.client_name}</td>
+                <td className="px-4 py-3 text-[#6b6b6b]">{t.lawyer_name}</td>
+                <td className="px-4 py-3 text-[#6b6b6b]">{t.task_type}</td>
+                <td className="px-4 py-3 text-[#6b6b6b] max-w-[240px] truncate">{t.description}</td>
+                <td className="px-4 py-3 text-right text-[#6b6b6b] tabular-nums">{t.time_tenths}</td>
+                <td className="px-4 py-3 text-right font-medium text-[#0f0f0f] tabular-nums">${t.amount?.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => { setEditTask(t); setShowForm(true); }}
+                      className="p-1.5 text-[#a3a3a3] hover:text-[#0f0f0f] transition-colors"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="p-1.5 text-[#a3a3a3] hover:text-[#dc2626] transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {tasks.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-500">No hay tareas para este periodo</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-[#a3a3a3]">
+                  No hay tareas para este periodo
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-[#6b6b6b]">
         <span>{total} tarea(s) en total</span>
-        <div className="flex items-center gap-3">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
-          <span className="text-gray-700 font-medium">Pág. {page} de {Math.max(1, Math.ceil(total / 50))}</span>
-          <button disabled={tasks.length < 50} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+        <div className="flex items-center gap-2">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => p - 1)}
+            className="px-3 py-1.5 border border-[#e5e5e5] rounded text-sm hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Anterior
+          </button>
+          <span className="text-[#0f0f0f] font-medium">Pág. {page} de {Math.max(1, Math.ceil(total / 50))}</span>
+          <button
+            disabled={tasks.length < 50}
+            onClick={() => setPage(p => p + 1)}
+            className="px-3 py-1.5 border border-[#e5e5e5] rounded text-sm hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Siguiente
+          </button>
         </div>
       </div>
 
-      {/* Modal form */}
-      {showForm && <TaskFormModal clients={clients} users={users} task={editTask} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+      {showForm && (
+        <TaskFormModal
+          clients={clients}
+          users={users}
+          task={editTask}
+          onClose={() => setShowForm(false)}
+          onSaved={() => { setShowForm(false); load(); }}
+        />
+      )}
     </div>
   );
 }
@@ -127,7 +174,6 @@ function TaskFormModal({ clients, users, task, onClose, onSaved }) {
     api.get('/task-types').then(res => setTaskTypes(res.data.task_types)).catch(console.error);
   }, []);
 
-  // Cargar saldo del cliente cuando cambia
   useEffect(() => {
     if (!form.client_id) { setClientSummary(null); return; }
     const period = form.date?.substring(0, 7) || new Date().toISOString().substring(0, 7);
@@ -154,64 +200,106 @@ function TaskFormModal({ clients, users, task, onClose, onSaved }) {
     }
   };
 
+  const inputCls = 'w-full px-3 py-2 border border-[#e5e5e5] bg-white text-sm rounded focus:outline-none focus:border-[#0f0f0f] transition-colors';
+  const labelCls = 'block text-xs font-medium text-[#6b6b6b] uppercase tracking-wider mb-1.5';
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl w-full max-w-lg p-6 space-y-4" onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900">{task ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
-        {error && <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>}
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded w-full max-w-lg p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <h2 className="text-base font-semibold text-[#0f0f0f]">{task ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
+
+        {error && (
+          <div className="text-sm text-[#dc2626] border border-[#fecaca] bg-[#fff5f5] px-3 py-2 rounded">{error}</div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-              <input type="date" value={form.date} max={new Date().toISOString().substring(0, 10)} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required />
+              <label className={labelCls}>Fecha</label>
+              <input
+                type="date"
+                value={form.date}
+                max={new Date().toISOString().substring(0, 10)}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                className={inputCls}
+                required
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tiempo (horas)</label>
-              <select value={form.time_tenths} onChange={e => setForm(f => ({ ...f, time_tenths: parseFloat(e.target.value) }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <label className={labelCls}>Tiempo (horas)</label>
+              <select
+                value={form.time_tenths}
+                onChange={e => setForm(f => ({ ...f, time_tenths: parseFloat(e.target.value) }))}
+                className={inputCls}
+              >
                 {Array.from({ length: 80 }, (_, i) => (i + 1) / 10).map(v => (
                   <option key={v} value={v}>{v} hr ({Math.round(v * 60)} min)</option>
                 ))}
               </select>
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-            <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+            <label className={labelCls}>Cliente</label>
+            <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} className={inputCls} required>
               <option value="">Seleccionar cliente</option>
               {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             {clientSummary && clientSummary.has_fixed_fee && (
-              <div className={`mt-1 px-3 py-2 rounded-lg text-xs ${clientSummary.disponible_usd < 0 ? 'bg-red-50 text-red-700' : clientSummary.porcentaje_consumido > 80 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'}`}>
+              <p className={`mt-1 text-xs px-2 py-1.5 rounded ${clientSummary.disponible_usd < 0 ? 'text-[#dc2626] bg-[#fff5f5]' : clientSummary.porcentaje_consumido > 80 ? 'text-[#b45309] bg-[#fffbeb]' : 'text-[#6b6b6b] bg-[#f5f5f5]'}`}>
                 Saldo: ${clientSummary.disponible_usd?.toFixed(2)} — {clientSummary.horas_disponibles}h disponibles ({clientSummary.porcentaje_consumido}% consumido)
-              </div>
+              </p>
             )}
             {clientSummary && !clientSummary.has_fixed_fee && (
-              <div className="mt-1 px-3 py-2 rounded-lg text-xs bg-blue-50 text-blue-700">
-                Pago por hora — {clientSummary.consumo_horas}h consumidas este mes (${clientSummary.consumo_usd?.toFixed(2)})
-              </div>
+              <p className="mt-1 text-xs px-2 py-1.5 rounded text-[#6b6b6b] bg-[#f5f5f5]">
+                Por hora — {clientSummary.consumo_horas}h este mes (${clientSummary.consumo_usd?.toFixed(2)})
+              </p>
             )}
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Abogado</label>
-            <select value={form.lawyer_id} onChange={e => setForm(f => ({ ...f, lawyer_id: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+            <label className={labelCls}>Abogado</label>
+            <select value={form.lawyer_id} onChange={e => setForm(f => ({ ...f, lawyer_id: e.target.value }))} className={inputCls} required>
               <option value="">Seleccionar abogado</option>
               {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tarea</label>
-            <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+            <label className={labelCls}>Tipo de tarea</label>
+            <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))} className={inputCls} required>
               <option value="">Seleccionar tipo</option>
               {taskTypes.map(tt => <option key={tt.id} value={tt.name}>{tt.name}</option>)}
             </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-            <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} maxLength={500} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required />
+            <label className={labelCls}>Descripción</label>
+            <textarea
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              maxLength={500}
+              rows={3}
+              className={inputCls}
+              required
+            />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Guardando...' : 'Guardar'}</button>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-[#e5e5e5] rounded text-sm text-[#6b6b6b] hover:bg-[#f5f5f5] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 px-4 py-2 bg-[#0f0f0f] hover:bg-[#2a2a2a] text-white rounded text-sm font-medium disabled:opacity-50 transition-colors"
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
           </div>
         </form>
       </div>

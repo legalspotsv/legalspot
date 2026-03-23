@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
-import { Check, Clock } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const TIME_OPTIONS = Array.from({ length: 20 }, (_, i) => {
   const val = (i + 1) / 10;
   const mins = Math.round(val * 60);
-  return { value: val, label: `${val}h`, sublabel: `${mins} min` };
+  return { value: val, label: `${val}h`, sublabel: `${mins}m` };
 });
 
 export default function TaskForm() {
@@ -44,86 +44,91 @@ export default function TaskForm() {
     }
   };
 
+  const inputCls = 'w-full px-3 py-2.5 border border-[#e5e5e5] bg-white text-sm rounded focus:outline-none focus:border-[#0f0f0f] transition-colors';
+  const labelCls = 'block text-xs font-medium text-[#6b6b6b] uppercase tracking-wider mb-1.5';
+
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Registrar Tarea</h1>
+      <h1 className="text-xl font-semibold text-[#0f0f0f] tracking-tight">Registrar Tarea</h1>
 
       {success && (
-        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-          <Check size={18} /> Tarea registrada exitosamente
+        <div className="flex items-center gap-2 text-sm text-[#16a34a] border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2.5 rounded">
+          <Check size={15} /> Tarea registrada exitosamente
         </div>
       )}
-      {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+      {error && (
+        <div className="text-sm text-[#dc2626] border border-[#fecaca] bg-[#fff5f5] px-3 py-2.5 rounded">{error}</div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-          <input type="date" value={form.date} max={new Date().toISOString().substring(0, 10)} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-lg" required />
+          <label className={labelCls}>Fecha</label>
+          <input
+            type="date"
+            value={form.date}
+            max={new Date().toISOString().substring(0, 10)}
+            onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+            className={inputCls}
+            required
+          />
         </div>
 
-        {/* Client */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-          <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-lg" required>
+          <label className={labelCls}>Cliente</label>
+          <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} className={inputCls} required>
             <option value="">Seleccionar cliente</option>
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
-        {/* Task type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tarea</label>
-          <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-lg" required>
+          <label className={labelCls}>Tipo de tarea</label>
+          <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))} className={inputCls} required>
             <option value="">Seleccionar tipo</option>
             {taskTypes.map(tt => <option key={tt.id} value={tt.name}>{tt.name}</option>)}
           </select>
         </div>
 
-        {/* Time grid — mobile-friendly */}
+        {/* Time grid */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Clock size={16} className="inline mr-1" />Tiempo trabajado
-          </label>
-          <div className="grid grid-cols-5 gap-2">
+          <label className={labelCls}>Tiempo trabajado</label>
+          <div className="grid grid-cols-5 gap-1.5">
             {TIME_OPTIONS.map(t => (
               <button
                 key={t.value}
                 type="button"
                 onClick={() => setForm(f => ({ ...f, time_tenths: t.value }))}
-                className={`p-3 rounded-lg border text-center transition-all ${
+                className={`py-2.5 rounded border text-center transition-colors ${
                   form.time_tenths === t.value
-                    ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
+                    ? 'bg-[#0f0f0f] text-white border-[#0f0f0f]'
+                    : 'bg-white text-[#6b6b6b] border-[#e5e5e5] hover:border-[#0f0f0f] hover:text-[#0f0f0f]'
                 }`}
               >
-                <div className="text-sm font-bold">{t.label}</div>
-                <div className={`text-xs ${form.time_tenths === t.value ? 'text-red-100' : 'text-gray-400'}`}>{t.sublabel}</div>
+                <div className="text-sm font-medium">{t.label}</div>
+                <div className={`text-xs ${form.time_tenths === t.value ? 'text-[#a3a3a3]' : 'text-[#a3a3a3]'}`}>{t.sublabel}</div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Descripción del trabajo</label>
+          <label className={labelCls}>Descripción del trabajo</label>
           <textarea
             value={form.description}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             maxLength={500}
-            rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+            rows={4}
+            className={inputCls}
             placeholder="Describe brevemente el trabajo realizado..."
             required
           />
-          <p className="text-xs text-gray-400 mt-1">{form.description.length}/500</p>
+          <p className="text-xs text-[#a3a3a3] mt-1">{form.description.length}/500</p>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-4 rounded-lg text-lg transition-colors disabled:opacity-50"
+          className="w-full bg-[#0f0f0f] hover:bg-[#2a2a2a] text-white font-medium py-3 rounded text-sm transition-colors disabled:opacity-50"
         >
           {saving ? 'Registrando...' : 'Registrar Tarea'}
         </button>
