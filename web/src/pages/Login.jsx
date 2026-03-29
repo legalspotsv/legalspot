@@ -83,6 +83,16 @@ export default function Login() {
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
+
+        {/* Credenciales temporales */}
+        <div className="mt-6 border border-[#e5e5e5] rounded p-3 bg-white">
+          <p className="text-xs font-medium text-[#6b6b6b] uppercase tracking-wider mb-2">Accesos de prueba</p>
+          <div className="space-y-1.5 text-xs text-[#6b6b6b]">
+            <div className="flex justify-between"><span className="font-medium text-[#0f0f0f]">Admin</span><span>admin@legalspot.sv / admin123</span></div>
+            <div className="flex justify-between"><span className="font-medium text-[#0f0f0f]">Abogado</span><span>alan@legalspot.sv / admin123</span></div>
+            <div className="flex justify-between"><span className="font-medium text-[#0f0f0f]">Cliente</span><span>balu@cliente.com / admin123</span></div>
+          </div>
+        </div>
       </div>
     </div>
   );
